@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.survey.shuvo.technodhaka.tdsurvey.activity.MainActivity">
+
+    <include
+        android:id="@+id/header"
+        layout="@layout/header" />
+
+    <RelativeLayout
+        android:id="@+id/page_title"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/header">
+
+
+        <TextView
+            style="@style/page_title_style"
+            android:text="@string/dt_response_title" />
+
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/tv_DtQuestion"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/page_title"
+        android:padding="10dp"
+        android:text="Qus"
+        android:textColor="@color/blue_dark"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+
+
+
+
+    <LinearLayout
+
+        android:id="@+id/ll_nextO_preview"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true">
+
+        <Button
+            android:id="@+id/btn_dt_preview"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/button_style"
+            android:text="prew"
+            android:textColor="@color/green"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+
+        <Button
+            android:id="@+id/btn_dt_next"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/button_style"
+            android:text="next"
+            android:textColor="@color/green"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+    </LinearLayout>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:hint="your answer"
+        android:ems="10"
+        style="@style/edit_text"
+        android:id="@+id/edt_text_response"
+       />
+
+    <EditText
+        android:id="@+id/edt_number_response"
+        style="@style/edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:inputType="number"
+        android:padding="10dp"
+        android:textSize="20sp"
+       />
+
+    <EditText
+        android:id="@+id/edt_decimal_response"
+        style="@style/edit_text"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:inputType="numberDecimal"
+        android:padding="10dp"
+        android:textSize="20sp"
+        />
+
+    <TextView
+        android:id="@+id/txt_date_response"
+        style="@style/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:padding="10dp"
+        android:textSize="20sp"
+        />
+
+    <TextView
+        android:id="@+id/txt_time_response"
+        style="@style/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:padding="10dp"
+        android:textSize="20sp"
+        />
+
+    <TextView
+        android:id="@+id/txt_date_and_time_response"
+        style="@style/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:padding="10dp"
+        android:textSize="20sp"
+        />
+
+    <TextView
+        android:id="@+id/txt_gps_response"
+        style="@style/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:hint="Input"
+        android:padding="10dp"
+        android:textSize="20sp"
+        />
+
+
+
+
+</RelativeLayout>
+
