@@ -69,6 +69,14 @@
         <activity
             android:name=".ResponseRecordingActivity"
             android:label="@string/title_activity_response_recording"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.GetSurveyActivity"
+            android:label="@string/title_activity_get_survey"
+            android:theme="@style/AppTheme.NoActionBar" />
+        <activity
+            android:name=".activity.SurevyListAnswerActivity"
+            android:label="@string/title_activity_surevy_list_answer"
             android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 

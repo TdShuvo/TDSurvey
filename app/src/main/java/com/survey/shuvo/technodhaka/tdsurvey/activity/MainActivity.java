@@ -73,9 +73,6 @@ public class MainActivity extends BaseActivity {
                 // DOING STRING OPERATION TO AVOID ALLOCATE CACHE MEMORY
                 String errorResult = response.substring(9, 14);
 
-
-
-
                 boolean error = !errorResult.equals("false");
                 if (!error) {
                     Log.d("TAG", "Before downLoad RegNHouseHold 6" + "  user_name:" + user_name + " password :" + password + " selectedVilJArry:" + selectedVilJArry + "operationMode:" + operationMode);
@@ -91,7 +88,6 @@ public class MainActivity extends BaseActivity {
                             errorMsg, Toast.LENGTH_LONG).show();
 
                 }
-
 
             }
         }, new Response.ErrorListener() {

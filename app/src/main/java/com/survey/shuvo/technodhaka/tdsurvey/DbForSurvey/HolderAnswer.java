@@ -1,10 +1,12 @@
 package com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey;
 
+import java.io.Serializable;
+
 /**
  * Created by TD02 on 3/21/2017.
  */
 
-public class HolderAnswer {
+public class HolderAnswer implements Serializable {
     public int answerId = -1;
     public int userId;
     public int questionId;

@@ -32,7 +32,7 @@ public class SyncUser {
 
     public SyncUser(Context context) {
         this.context = context;
-        apiLink = apiUrlGenerator.getUserApiLink(3);
+       // apiLink = apiUrlGenerator.getUserApiLink(3);
         dbHelper = new DbHelper(context);
     }
 

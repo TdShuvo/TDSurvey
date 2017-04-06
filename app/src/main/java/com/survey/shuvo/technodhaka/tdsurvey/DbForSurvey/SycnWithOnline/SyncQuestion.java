@@ -32,7 +32,7 @@ public class SyncQuestion {
 
     public SyncQuestion(Context context) {
         this.context = context;
-        apiLink = apiUrlGenerator.getQuestionApiLink();
+       // apiLink = apiUrlGenerator.getQuestionApiLink();
         dbHelper = new DbHelper(context);
     }
 

@@ -23,22 +23,11 @@ import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.ApiUrlGenerator;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.DbHelper;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderAnswerMode;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderCountry;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestion;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestionType;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderSector;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderSkip;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderSurvey;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderUser;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderUserAccess;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncAnswerMode;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncCountry;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncQuestion;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncQuestionType;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncSector;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncSkip;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncSurvey;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncUser;
-import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncUserAccess;
 import com.survey.shuvo.technodhaka.tdsurvey.MainPageActivity;
 import com.survey.shuvo.technodhaka.tdsurvey.R;
 
@@ -58,6 +47,9 @@ public class LoginActivity extends AppCompatActivity {
     Button btnLogin;
     String user_name, password;
     DbHelper dbHelper;
+    String Login_once_user_name;
+    String Login_once_password;
+    public static volatile boolean secondTimeLogIn = false;
 
     public ProgressBar spinner;
     SharedPreferences.Editor editor;
@@ -72,31 +64,16 @@ public class LoginActivity extends AppCompatActivity {
         dbHelper  = new DbHelper(LoginActivity.this);
 
         editor = getSharedPreferences(SURVEY_USER, MODE_PRIVATE).edit();
-       // dbHelper = new DbHelper(this);
-       // new SyncUser(LoginActivity.this).startDownLoad();
-
-
 
         edtUserName = (EditText) findViewById(R.id.edt_user_name);
         edtPassword = (EditText) findViewById(R.id.edt_password);
-
-
-
-       /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
 
 
         btnLogin = (Button) findViewById(R.id.button);
         spinner = (ProgressBar) findViewById(R.id.progressBar);
         spinner.setVisibility(View.GONE);
 
-        GetUserJson g=new GetUserJson();
+        GetCountryJson g=new GetCountryJson();
         g.execute();
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
@@ -107,10 +84,24 @@ public class LoginActivity extends AppCompatActivity {
                 password = edtPassword.getText().toString().trim();
 
                 if (user_name.length() > 0 && password.length() >0){
-                    isValidUser(user_name,password);
+                    if (checkFirstLogin()){
+                        isValidUser(user_name,password);
+                    }else{
+
+
+                        if (user_name.equals(Login_once_user_name) && password.equals(Login_once_password)){
+                            secondTimeLogIn = true;
+                            startActivity(new Intent(LoginActivity.this, MainPageActivity.class));
+                        }else{
+                            Toast.makeText(LoginActivity.this, "Please Provide a valid user name and password", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
                 }else {
                     Toast.makeText(LoginActivity.this, "Please Enter Your User Name and Password", Toast.LENGTH_SHORT).show();
                 }
+
+
 
             }
         });
@@ -144,6 +135,15 @@ public class LoginActivity extends AppCompatActivity {
         });
     }*/
 
+    public Boolean checkFirstLogin(){
+        SharedPreferences prefs = getSharedPreferences(SURVEY_USER, MODE_PRIVATE);
+        Login_once_user_name = prefs.getString("user_name", null);
+        Login_once_password  = prefs.getString("password", null);
+        if (Login_once_user_name != null && Login_once_password != null){
+            return false;
+        } else return true;
+    }
+
     public  void isValidUser(final String user_name, final String password){
 
         String JSON_URL = "http://10.0.2.2:8080/api/values/GetUserId?user_name=" + user_name + "&password="+ password ;
@@ -163,7 +163,8 @@ public class LoginActivity extends AppCompatActivity {
                            /* editor.putInt("country_id", holderUser.countryId);
                             editor.putInt("user_id",holderUser.userId);*/
                             editor.commit();
-
+                            GetUserJson g=new GetUserJson(user_name,password);
+                            g.execute();
 
                             startActivity(new Intent(LoginActivity.this, MainPageActivity.class));
 
@@ -188,6 +189,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private class GetUserJson extends AsyncTask {
+        String userName, password;
+
+        public GetUserJson(String userName, String password) {
+            this.userName = userName;
+            this.password = password;
+        }
+
 
         @Override
         protected void onPreExecute() {
@@ -198,10 +206,20 @@ public class LoginActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Object o) {
             super.onPostExecute(o);
-         //   spinner.setVisibility(View.GONE);
-           // new SyncCountry(LoginActivity.this).startDownLoad();
-            GetCountryJson g=new GetCountryJson();
-            g.execute();
+            SharedPreferences prefs = getSharedPreferences(SURVEY_USER, MODE_PRIVATE);
+            user_name = prefs.getString("user_name", null);
+            password = prefs.getString("password", null);
+
+
+            HolderUser holderUser = dbHelper.getUserInfo(user_name,password);
+
+            if(holderUser != null && holderUser.userId != -1){
+                GetSurveyJson g = new GetSurveyJson(holderUser.userId);
+                g.execute();
+                spinner.setVisibility(View.GONE);
+            }else{
+                Toast.makeText(LoginActivity.this, "No User found!", Toast.LENGTH_SHORT).show();
+            }
 
         }
 
@@ -210,7 +228,7 @@ public class LoginActivity extends AppCompatActivity {
 
             String jsonResult = "";
             try {
-                URL requestUrl = new URL(ApiUrlGenerator.getUserApiLink(3));
+                URL requestUrl = new URL(ApiUrlGenerator.getUserApiLink(userName,password));
                 URLConnection con = requestUrl.openConnection();
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 StringBuilder sb = new StringBuilder();
@@ -264,8 +282,8 @@ public class LoginActivity extends AppCompatActivity {
             super.onPostExecute(o);
            // new SyncSurvey(context).startDownLoad();
 
-            GetSurveyJson g = new GetSurveyJson();
-            g.execute();
+           /* GetSurveyJson g = new GetSurveyJson();
+            g.execute();*/
         }
 
         @Override
@@ -306,7 +324,7 @@ public class LoginActivity extends AppCompatActivity {
                 dbHelper.insertCountry(holderCountry);
 //                Log.e("PD DEBUG","Insert song success: "+title+" "+album+" "+artist+" "+photo+" >> "+ret);
                 // Log.e("showData",holderQuestion.toString());
-                Log.e("ShuvoQuestion", "get Question" + holderCountry.countryName);
+              //  Log.e("ShuvoQuestion", "get Question" + holderCountry.countryName);
             }
 
         }
@@ -314,17 +332,28 @@ public class LoginActivity extends AppCompatActivity {
 
     private class GetSurveyJson extends AsyncTask {
 
+        int userID;
+
+
+        public GetSurveyJson(int userID) {
+            this.userID = userID;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+
+
         }
 
         @Override
         protected void onPostExecute(Object o) {
             super.onPostExecute(o);
-           // new SyncQuestion(context).startDownLoad();
-            GetQuestionJson g = new GetQuestionJson();
-            g.execute();
+            spinner.setVisibility(View.GONE);
+
+
+            // new SyncQuestion(context).startDownLoad();
+
         }
 
         @Override
@@ -332,7 +361,7 @@ public class LoginActivity extends AppCompatActivity {
 
             String jsonResult = "";
             try {
-                URL requestUrl = new URL(ApiUrlGenerator.getSurveyApiLink(1002));
+                URL requestUrl = new URL(ApiUrlGenerator.getSurveyApiLink(userID));
                 URLConnection con = requestUrl.openConnection();
                 BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                 StringBuilder sb = new StringBuilder();
@@ -365,128 +394,6 @@ public class LoginActivity extends AppCompatActivity {
                 // Log.e("showData",question);
                 HolderSurvey holderSurvey = new HolderSurvey(surveyId,userId,sectorId,surveyName);
                 dbHelper.insertSurvey(holderSurvey);
-//                Log.e("PD DEBUG","Insert song success: "+title+" "+album+" "+artist+" "+photo+" >> "+ret);
-                // Log.e("showData",holderQuestion.toString());
-                //  Log.e("ShuvoQuestion", "get Question" + holderUser.email);
-            }
-
-        }
-    }
-
-    private class GetQuestionJson extends AsyncTask {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            GetQuestionTypeJson g = new GetQuestionTypeJson();
-            g.execute();
-
-            spinner.setVisibility(View.GONE);
-          //  new SyncQuestionType(context).startDownLoad();
-        }
-
-        @Override
-        protected Object doInBackground(Object[] params) {
-
-            String jsonResult = "";
-            try {
-                URL requestUrl = new URL(ApiUrlGenerator.getQuestionApiLink());
-                URLConnection con = requestUrl.openConnection();
-                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                StringBuilder sb = new StringBuilder();
-                int cp;
-                while ((cp = in.read()) != -1) {
-                    sb.append((char) cp);
-                }
-                jsonResult = sb.toString();
-                parseJson(jsonResult);
-            } catch (Exception e) {
-
-            }
-            return null;
-        }
-
-
-        void parseJson(String json) throws JSONException {
-            JSONObject root = new JSONObject(json);
-            // String permission = root.getString("state");
-
-            JSONArray questionArray = root.getJSONArray("Table");
-            int len =  questionArray.length();
-            for (int i = 0; i < len; i++) {
-                JSONObject arrayElement =  questionArray.getJSONObject(i);
-                int id = arrayElement.getInt("Question_id");
-                String question = arrayElement.getString("Question");
-                int questionTypeID = arrayElement.getInt("QT_id");
-                int serveyId = arrayElement.getInt("Survey_id");
-
-              //  Log.e("showData",question);
-                HolderQuestion holderQuestion = new HolderQuestion(id,questionTypeID,serveyId,question);
-                dbHelper.insertQuestion(holderQuestion);
-//                Log.e("PD DEBUG","Insert song success: "+title+" "+album+" "+artist+" "+photo+" >> "+ret);
-              //  Log.e("showData",holderQuestion.toString());
-               //// Log.e("ShuvoQuestion", "get Question" + holderQuestion.question);
-            }
-
-        }
-    }
-
-    private class GetQuestionTypeJson extends AsyncTask {
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-        }
-
-        @Override
-        protected void onPostExecute(Object o) {
-            super.onPostExecute(o);
-            GetSkipJson g = new GetSkipJson();
-            g.execute();
-          //  new SyncSkip(context).startDownLoad();
-        }
-
-        @Override
-        protected Object doInBackground(Object[] params) {
-
-            String jsonResult = "";
-            try {
-                URL requestUrl = new URL(ApiUrlGenerator.getQuestionTypeApiLink());
-                URLConnection con = requestUrl.openConnection();
-                BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-                StringBuilder sb = new StringBuilder();
-                int cp;
-                while ((cp = in.read()) != -1) {
-                    sb.append((char) cp);
-                }
-                jsonResult = sb.toString();
-                parseJson(jsonResult);
-            } catch (Exception e) {
-
-            }
-            return null;
-        }
-
-
-        void parseJson(String json) throws JSONException {
-            JSONObject root = new JSONObject(json);
-            // String permission = root.getString("state");
-
-            JSONArray questionArray = root.getJSONArray("Table");
-            int len =  questionArray.length();
-            for (int i = 0; i < len; i++) {
-                JSONObject arrayElement =  questionArray.getJSONObject(i);
-                int qtId = arrayElement.getInt("QT_id");
-                String qtName = arrayElement.getString("QT_name");
-
-                // Log.e("showData",question);
-                HolderQuestionType holderQuestionType = new HolderQuestionType(qtId,qtName);
-                dbHelper.insertQuestionType(holderQuestionType);
 //                Log.e("PD DEBUG","Insert song success: "+title+" "+album+" "+artist+" "+photo+" >> "+ret);
                 // Log.e("showData",holderQuestion.toString());
                 //  Log.e("ShuvoQuestion", "get Question" + holderUser.email);
@@ -696,7 +603,7 @@ public class LoginActivity extends AppCompatActivity {
         protected void onPostExecute(Object o) {
             super.onPostExecute(o);
 
-          //  spinner.setVisibility(View.GONE);
+           // spinner.setVisibility(View.GONE);
         }
 
         @Override

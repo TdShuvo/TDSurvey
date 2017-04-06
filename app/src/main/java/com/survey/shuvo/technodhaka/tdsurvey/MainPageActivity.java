@@ -1,16 +1,21 @@
 package com.survey.shuvo.technodhaka.tdsurvey;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.DbHelper;
+import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderAnswer;
+import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestion;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncAnswerMode;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncCountry;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncQuestion;
@@ -20,10 +25,25 @@ import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncSkip
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncSurvey;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncUser;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.SycnWithOnline.SyncUserAccess;
+import com.survey.shuvo.technodhaka.tdsurvey.activity.GetSurveyActivity;
+import com.survey.shuvo.technodhaka.tdsurvey.activity.SurevyListAnswerActivity;
+
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.List;
+
+import javax.net.ssl.HttpsURLConnection;
 
 public class MainPageActivity extends AppCompatActivity {
 
-    Button btnGetQuestion, btnGetData;
+    Button btnSyncOnline, btnSurveyData;
     private DbHelper dbHelper;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,41 +53,37 @@ public class MainPageActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+      /*  FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
-        });
+        });*/
 
-        btnGetQuestion = (Button) findViewById(R.id.btn_get_question);
-        btnGetData = (Button) findViewById(R.id.get_all_data);
-        btnGetData.setOnClickListener(new View.OnClickListener() {
+        btnSyncOnline = (Button) findViewById(R.id.btn_sync_online);
+        btnSurveyData = (Button) findViewById(R.id.get_survey_list);
+        btnSurveyData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Toast.makeText(MainPageActivity.this,"downloading",Toast.LENGTH_LONG).show();
-
-
-
-
-
-
-
-
+                startActivity(new Intent(MainPageActivity.this, GetSurveyActivity.class));
 
             }
         });
-        btnGetQuestion.setOnClickListener(new View.OnClickListener() {
+        btnSyncOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                startActivity(new Intent(MainPageActivity.this,ResponseRecordingActivity.class));
+               startActivity(new Intent(MainPageActivity.this,SurevyListAnswerActivity.class));
 
             }
         });
     }
+
+
+
+
 
   /*  public  void getQuestion(){
 

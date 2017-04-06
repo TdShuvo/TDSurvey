@@ -1,6 +1,8 @@
 package com.survey.shuvo.technodhaka.tdsurvey;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -10,15 +12,65 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.DbHelper;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderAnswer;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestion;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestionType;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderUser;
+import com.survey.shuvo.technodhaka.tdsurvey.controller.AppController;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import static com.survey.shuvo.technodhaka.tdsurvey.activity.LoginActivity.SURVEY_USER;
 
@@ -52,7 +104,11 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     int totalQuestionOfASurvey;
 
     int mQusIndex = 14;
+    int surveyID;
+    HolderUser holderUser;
+    HolderAnswer holderAnswer;
 
+    String answerResponse;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,14 +118,24 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         dbHelper = new DbHelper(this);
-       /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
+
+        Intent iin = getIntent();
+        Bundle b = iin.getExtras();
+
+        if (b != null) {
+            surveyID = b.getInt("surveyID");
+        }
+
+        String user_name = null, password = null;
+        SharedPreferences prefs = getSharedPreferences(SURVEY_USER, MODE_PRIVATE);
+
+
+        user_name = prefs.getString("user_name", null);
+        password = prefs.getString("password", null);
+
+
+        holderUser = dbHelper.getUserInfo(user_name, password);
+        // holderAnswer = new HolderAnswer(2,15,18,5,5,3,"Hello test from android.");
 
         init();
         showFirstQuestion();
@@ -77,12 +143,22 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         btnNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+               // answerResponse=loadResponseView().get
+                if (answerResponse != null) {
+                    Toast.makeText(ResponseRecordingActivity.this, "Give Your response.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 ++mQusIndex;
                 if (mQusIndex <= totalQuestionOfASurvey)
-                    loadQuestion(mQusIndex);
+                    loadQuestion(mQusIndex, surveyID);
                 else if (mQusIndex > totalQuestionOfASurvey)
                     mQusIndex = totalQuestionOfASurvey;
                 getQuestionType();
+
+                //if ()
+
+                //   new SendPostRequest().execute();
+
             }
         });
 
@@ -91,7 +167,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             public void onClick(View v) {
                 --mQusIndex;
                 if (mQusIndex >= 1)
-                    loadQuestion(mQusIndex);
+                    loadQuestion(mQusIndex, surveyID);
                 else if (mQusIndex < 1)
                     mQusIndex = 0;
             }
@@ -101,19 +177,21 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 
     private void showFirstQuestion() {
         mQusIndex = 1;
-        loadQuestion(mQusIndex);
+        loadQuestion(mQusIndex, surveyID);
     }
 
-    public void loadQuestion(int id) {
-        Log.e("shuvogivenId", String.valueOf(id));
-        List<HolderQuestion> question = dbHelper.getQuestion("1", mQusIndex - 1);
+    public void loadQuestion(int id, int surveyID) {
+        //  Log.e("shuvogivenId", String.valueOf(id));
+        // List<HolderQuestion> question = dbHelper.getQuestion("1", mQusIndex - 1);
+        List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, mQusIndex - 1);
         //  Log.e("shuvoQuestion",question.question);
-        if (question.size()>0){
-            for(int i =0;i<question.size();i++){
+        if (question.size() > 0) {
+            for (int i = 0; i < question.size(); i++) {
                 HolderQuestion holderQuestion = question.get(i);
+                answerResponse = loadResponseView(holderQuestion.questionTypeId);
                 //holderQuestion.
-                loadAnswer(holderQuestion.questionId,holderQuestion.questionTypeId,1,holderQuestion.surveyId);
-               // Log.e("QuestionType", String.valueOf(question.get(i).questionTypeId));
+                //   loadAnswer(holderQuestion.questionId,holderQuestion.questionTypeId,1,holderQuestion.surveyId);
+                // Log.e("QuestionType", String.valueOf(question.get(i).questionTypeId));
                 txtQuestion.setText(question.get(i).question);
 
             }
@@ -126,76 +204,140 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 */
     }
 
-    public void loadAnswer(int questionID,int qt_id, int sequenceId, int surveyId){
+    public String loadResponseView(int qt_id) {
+
+        String userResponse = null;
+        switch (qt_id) {
+            case 1:
+                showOneView(edtText);
+                userResponse = String.valueOf(edtText.getText());
+                break;
+
+            case 2:
+                showOneView(edtText);
+                userResponse = String.valueOf(edtText.getText());
+                break;
+            case 3:
+                showOneView(edtText);
+                userResponse = String.valueOf(edtText.getText());
+                break;
+            case 4:
+                showOneView(edtNumber);
+                userResponse = String.valueOf(edtNumber.getText());
+                break;
+            case 5:
+                showOneView(edtDecimal);
+                userResponse = String.valueOf(edtDecimal.getText());
+                break;
+            case 6:
+                showOneView(txtDate);
+                userResponse = String.valueOf(txtDate.getText());
+                break;
+            case 7:
+                showOneView(txtTime);
+                userResponse = String.valueOf(txtTime.getText());
+                break;
+            case 8:
+                showOneView(txtDataAndTime);
+                userResponse = String.valueOf(txtDataAndTime.getText());
+                break;
+            case 9:
+                showOneView(txtGps);
+                userResponse = String.valueOf(txtGps.getText());
+                break;
+            default:
+                return userResponse;
+
+        }
+        return userResponse;
+    }
+
+
+    public void loadAnswer(int questionID, int qt_id, int sequenceId, int surveyId) {
         String response = null;
         String user_name = null, password = null;
         SharedPreferences prefs = getSharedPreferences(SURVEY_USER, MODE_PRIVATE);
-        String restoredText = prefs.getString("text", null);
-        if (restoredText != null) {
 
-            user_name = prefs.getString("user_name", null);
-            password = prefs.getString("password", null);
+        user_name = prefs.getString("user_name", null);
+        password = prefs.getString("password", null);
+
+        HolderUser holderUser = dbHelper.getUserInfo(user_name, password);
+
+
+        // Log.e("SharedPrefer", String.valueOf(userId)+ String.valueOf(country_id));
+        //  HolderUser holderUser = dbHelper.getUser();
+
+        switch (qt_id) {
+
+            case 1:
+                //showOneView(edtText);
+                response = edtText.getText().toString().trim();
+                if (response != null) {
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
+                edtText.setText("");
+                break;
+            case 2: //showOneView(edtText);
+                response = edtText.getText().toString().trim();
+                if (response != null) {
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
+                edtText.setText("");
+                break;
+            case 3: //showOneView(edtText);
+                response = edtText.getText().toString().trim();
+                if (response != null) {
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
+                edtText.setText("");
+                break;
+            case 4:// showOneView(edtNumber);
+                response = edtNumber.getText().toString().trim();
+                if (response != null) {
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
+                edtNumber.setText("");
+                break;
+            case 5: //showOneView(edtDecimal);
+                response = edtDecimal.getText().toString().trim();
+                if (response != null) {
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
+                edtDecimal.setText("");
+                break;
+          /* case 6: //showOneView(txtDate);
+               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
+               break;
+           case 7: //showOneView(txtTime);
+               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
+               break;
+           case 8: //showOneView(txtDataAndTime);
+               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
+               break;
+           case 9: //showOneView(txtGps);
+               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
+               break;*/
+            default: //showOneView(edtText);
+                response = edtText.getText().toString().trim();
+                if (response != null)
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                edtText.setText("");
         }
-
-        HolderUser holderUser = dbHelper.getUserInfo(user_name,password);
-
-       // Log.e("SharedPrefer", String.valueOf(userId)+ String.valueOf(country_id));
-      //  HolderUser holderUser = dbHelper.getUser();
-        HolderAnswer holderAnswer ;
-       switch (qt_id){
-
-           case 1:
-               showOneView(edtText);
-               response = edtText.getText().toString().trim();
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               edtText.setText("");
-               break;
-           case 2: showOneView(edtText);
-               response = edtText.getText().toString().trim();
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               edtText.setText("");
-               break;
-           case 3: showOneView(edtText);
-               response = edtText.getText().toString().trim();
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               edtText.setText("");
-               break;
-           case 4: showOneView(edtNumber);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           case 5: showOneView(edtDecimal);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           case 6: showOneView(txtDate);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           case 7: showOneView(txtTime);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           case 8: showOneView(txtDataAndTime);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           case 9: showOneView(txtGps);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-               break;
-           default: showOneView(edtText);
-               dbHelper.insertAnswer( new HolderAnswer(holderUser.userId,questionID,holderUser.countryId,qt_id,sequenceId,surveyId,response));
-       }
 
 
     }
 
-    public void showOneView(View view){
+    public void showOneView(View view) {
         hideView();
         view.setVisibility(View.VISIBLE);
     }
 
-    public void hideView(){
+    public void hideView() {
         txtDataAndTime.setVisibility(View.GONE);
         txtDate.setVisibility(View.GONE);
         txtTime.setVisibility(View.GONE);
         txtGps.setVisibility(View.GONE);
-       // txtQuestion.setVisibility(View.GONE);
+        // txtQuestion.setVisibility(View.GONE);
 
         edtText.setVisibility(View.GONE);
         edtNumber.setVisibility(View.GONE);
@@ -219,27 +361,27 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 
         totalQuestionOfASurvey = dbHelper.getQuestion().size();
 
-       // Log.e("totalCount", String.valueOf(totalQuestionOfASurvey));
+        // Log.e("totalCount", String.valueOf(totalQuestionOfASurvey));
     }
 
-    public void getQuestionType(){
-       ArrayList<HolderQuestionType> qtArray = dbHelper.getQuestionType();
-        for(int i =0;i<qtArray.size();i++){
-         //   qtArray.get(i).questionTypeName;
+    public void getQuestionType() {
+        ArrayList<HolderQuestionType> qtArray = dbHelper.getQuestionType();
+        for (int i = 0; i < qtArray.size(); i++) {
+            //   qtArray.get(i).questionTypeName;
         }
-       // Log.e("qtArray",qtArray.toString());
+        // Log.e("qtArray",qtArray.toString());
     }
 
-    public String sendAnswer(HolderAnswer holderAnswer){
+  /*  public String sendAnswer(HolderAnswer holderAnswer){
         String query = "INSERT INTO [dbo].[Answer] VALUES (" + holderAnswer.answerId +","+ holderAnswer.answer+","+ holderAnswer.userId+","+
                 holderAnswer.countryId+","+ holderAnswer.questionId +","+ holderAnswer.questionTypeId +","+ holderAnswer.secquenceId +");";
 
 
-      /*  INSERT INTO [dbo].[Answer]
-        VALUES (answerid, "Answer", userId,countryId,questionId,qt_id,secquence_id);*/
+      *//*  INSERT INTO [dbo].[Answer]
+        VALUES (answerid, "Answer", userId,countryId,questionId,qt_id,secquence_id);*//*
 
         return  query;
-    }
+    }*/
 
   /*  private void saveProcessValidation() {
 

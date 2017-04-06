@@ -611,4 +611,6 @@ Otherwise, initiate to sync and login again.</string>
     <string name="title_activity_login">LoginActivity</string>
     <string name="title_activity_main_page">MainPageActivity</string>
     <string name="title_activity_response_recording">ResponseRecordingActivity</string>
+    <string name="title_activity_get_survey">GetSurveyActivity</string>
+    <string name="title_activity_surevy_list_answer">SurevyListAnswerActivity</string>
 </resources>

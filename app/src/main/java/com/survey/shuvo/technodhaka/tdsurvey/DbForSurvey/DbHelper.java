@@ -17,6 +17,7 @@ import java.util.ArrayList;
 
 public class DbHelper extends SQLiteOpenHelper {
 
+    private SQLiteDatabase db;
     Context context;
     private String myPath= "";
     public static final int DATABASE_VERSION = 1;
@@ -182,12 +183,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public DbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-
-        if (android.os.Build.VERSION.SDK_INT >= 4.2) {
-            myPath = context.getApplicationInfo().dataDir + "/databases/";
-        } else {
-            myPath = "/data/data/" + context.getPackageName() + "/databases/";
-        }
     }
 
 
@@ -228,7 +223,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public long insertQuestion(HolderQuestion holderQuestion) {
         long row = -1;
-        SQLiteDatabase db = getWritableDatabase();
        // db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
         ContentValues cv = new ContentValues();
         cv.put(QUESTION_ID, holderQuestion.questionId);
@@ -238,6 +232,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderQuestion data = getQuestion(holderQuestion.questionId);
+        db = getWritableDatabase();
         if (data == null || data.questionId == -1)
             row = db.insert(TABLE_QUESTION, null, cv);
 
@@ -267,7 +262,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderQuestion> getQuestion(int id, String limit, int offset) {
         ArrayList<HolderQuestion> questionData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -281,6 +277,32 @@ public class DbHelper extends SQLiteOpenHelper {
             cursor = db.rawQuery("SELECT * From " + TABLE_QUESTION + " Limit 1 Offset " + offset, null);
         }
 
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            for (int i = 0; i < cursor.getCount(); i++) {
+                questionData.add(new HolderQuestion(
+                        cursor.getInt(cursor.getColumnIndex(QUESTION_ID)),
+                        cursor.getInt(cursor.getColumnIndex(QUESTION_QUESTION_TYPE_ID)),
+                        cursor.getInt(cursor.getColumnIndex(QUESTION_SURVEY_ID)),
+                        cursor.getString(cursor.getColumnIndex(QUESTION))
+                ));
+                cursor.moveToNext();
+            }
+            cursor.close();
+            db.close();
+        }
+
+        return questionData;
+    }
+
+
+    public ArrayList<HolderQuestion> getQuestionsForSurveyId(int surveyID, int offset){
+        ArrayList<HolderQuestion> questionData = new ArrayList<>();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+      //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
+        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_QUESTION + " WHERE question_survey_id = "+ surveyID+" Limit 1 Offset " + offset, null);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -333,7 +355,6 @@ public class DbHelper extends SQLiteOpenHelper {
     //Answer --- Start//
 
     public long insertAnswer(HolderAnswer holderAnswer) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
         ContentValues cv = new ContentValues();
         cv.put(ANSWER_USER_ID, holderAnswer.userId);
@@ -345,6 +366,8 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(ANSWER, holderAnswer.answer);
 
         HolderAnswer data = getAnswer(holderAnswer.answerId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.questionId == -1)
             row = db.insert(TABLE_ANSWER, null, cv);
         db.close();
@@ -368,7 +391,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderAnswer> getAnswer(int id, String limit) {
         ArrayList<HolderAnswer> answerData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -401,6 +425,36 @@ public class DbHelper extends SQLiteOpenHelper {
         return answerData;
     }
 
+
+    public ArrayList<HolderAnswer> getAnswerForSurveyId(int surveyId){
+        ArrayList<HolderAnswer> answerData = new ArrayList<>();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+        //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
+
+        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_ANSWER + " WHERE answer_survey_id = "+ surveyId, null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            for (int i = 0; i < cursor.getCount(); i++) {
+                answerData.add(new HolderAnswer(
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_USER_ID)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_QUESTION_ID)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_COUNTRY_ID)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_QUESTION_TYPE_ID)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_SEQUENCE_ID)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_SURVEY_ID)),
+                        cursor.getString(cursor.getColumnIndex(ANSWER))
+                ));
+                cursor.moveToNext();
+            }
+            cursor.close();
+            db.close();
+        }
+
+        return answerData;
+    }
+
  /*   public long deleteAnswer(int ans_id) {
         SQLiteDatabase db = getWritableDatabase();
         db.delete(TABLE_ANSWER, ANSWER_ANSWER_ID + "=" + ans_id, null);
@@ -415,7 +469,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
     public long insertUser(HolderUser holderUser) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
       /*  db.execSQL("insert into table_user (user_id,name,password,user_name,email,gender,country_id)" + "values("ordid+","+doci+","
                 + "\"" + docnam + "\"" + ") ;");*/
@@ -429,9 +482,12 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(USER_COUNTRY_ID, holderUser.countryId);
 
         HolderUser data = getUser(holderUser.userId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
 
         if (data == null || data.userId == -1)
             row = db.insert(TABLE_USER, null, cv);
+
         db.close();
         return row;
     }
@@ -453,7 +509,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderUser> getUser(int id, String limit) {
         ArrayList<HolderUser> userData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -485,15 +542,39 @@ public class DbHelper extends SQLiteOpenHelper {
 
         return userData;
     }
-
+// Where is the error? Is it working now?
+    // na dada. dada i think problem is Sal_sal
+    // can i try with another usr name
+    // OK
+    public void showAllUser() {
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+        Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user ",null);
+        if (cursorCountryId != null && cursorCountryId.getCount() > 0){
+            cursorCountryId.moveToFirst();
+            Log.e("PD_DEBUG","User Data: "+
+                    cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_ID))+ "\n"+
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_NAME))+ "\n"+
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_PASSWORD))+ "\n"+
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_USER_NAME))+ "\n"+
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_EMAIL))+ "\n"+
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_GENDER))+ "\n"+
+                    cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_COUNTRY_ID))
+            );
+        }
+    }
     public HolderUser getUserInfo(String user_name, String password){
+
+        showAllUser();
+
         HolderUser holderUser = null;
-        SQLiteDatabase db = getWritableDatabase();
       //  String cursor = "select * From "+ TABLE_USER +" where user_name = '"+ user_name+"' and password = '"+password+"';";
-      //  String cursor = "SELECT * FROM "+ TABLE_USER +" WHERE user_name = '"+ user_name+"' and password = '"+password+"';";
+        //  String cursor = "SELECT * FROM "+ TABLE_USER +" WHERE user_name = '"+ user_name+"' and password = '"+password+"';";
 
-      //  rawQuery("SELECT id, name FROM people WHERE name = ? AND id = ?", new String[] {"David", "2"});
+        //  rawQuery("SELECT id, name FROM people WHERE name = ? AND id = ?", new String[] {"David", "2"});
 
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
         Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user WHERE name = ? AND password = ?",new String[]{user_name,password});
         if (cursorCountryId != null && cursorCountryId.getCount() > 0){
             cursorCountryId.moveToFirst();
@@ -524,7 +605,6 @@ public class DbHelper extends SQLiteOpenHelper {
     // Country --- START//
 
     public long insertCountry(HolderCountry holderCountry) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
         //db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
         ContentValues cv = new ContentValues();
@@ -533,6 +613,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderCountry data = getCountry(holderCountry.countryId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.countryId == -1)
             row = db.insert(TABLE_COUNTRY, null, cv);
         db.close();
@@ -556,7 +638,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderCountry> getCountry(int id, String limit) {
         ArrayList<HolderCountry> userData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -578,7 +661,6 @@ public class DbHelper extends SQLiteOpenHelper {
                 cursor.moveToNext();
             }
             cursor.close();
-            db.close();
         }
 
         return userData;
@@ -596,7 +678,6 @@ public class DbHelper extends SQLiteOpenHelper {
     // QuestionType ---  START//
 
     public long insertQuestionType(HolderQuestionType holderQuestionType) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
         ContentValues cv = new ContentValues();
         cv.put(QUESTION_TYPE_ID, holderQuestionType.questionTypeId);
@@ -604,6 +685,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderQuestionType data = getQuestionType(holderQuestionType.questionTypeId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.questionTypeId == -1)
             row = db.insert(TABLE_QUESTION_TYPE, null, cv);
         db.close();
@@ -627,7 +710,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderQuestionType> getQuestionType(int id, String limit) {
         ArrayList<HolderQuestionType> questionTypesData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -667,7 +751,6 @@ public class DbHelper extends SQLiteOpenHelper {
     //Sector --- Start//
 
     public long insertSector(HolderSector holderSector) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
         ContentValues cv = new ContentValues();
         cv.put(SECTOR_ID, holderSector.sectorId);
@@ -675,6 +758,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSector data = getSector(holderSector.sectorId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.sectorId == -1)
             row = db.insert(TABLE_SECTOR, null, cv);
         db.close();
@@ -698,7 +783,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSector> getSector(int id, String limit) {
         ArrayList<HolderSector> sectorData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -740,7 +826,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public long insertSkip(HolderSkip holderSkip) {
         long row=-1;
-        SQLiteDatabase db = getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put(SKIP_ID, holderSkip.skipId);
         cv.put(SKIP_SURVEY_ID, holderSkip.surveyId);
@@ -750,6 +835,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSkip data = getSkip(holderSkip.skipId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.skipId == -1)
             row= db.insert(TABLE_SKIP, null, cv);
 
@@ -775,7 +862,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSkip> getSkip(int id, String limit) {
         ArrayList<HolderSkip> skipData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -819,9 +907,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
     public long insertSurvey(HolderSurvey holderSurvey) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
-       // db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
+        // db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
         ContentValues cv = new ContentValues();
         cv.put(SURVEY_ID, holderSurvey.surveyId);
         cv.put(SURVEY_SECTOR_ID, holderSurvey.sectorId);
@@ -830,6 +917,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSurvey data = getSurvey(holderSurvey.surveyId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.surveyId == -1)
             row = db.insert(TABLE_SURVEY, null, cv);
         db.close();
@@ -853,7 +942,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSurvey> getSurvey(int id, String limit) {
         ArrayList<HolderSurvey> surveyData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -883,6 +973,33 @@ public class DbHelper extends SQLiteOpenHelper {
         return surveyData;
     }
 
+    public ArrayList<HolderSurvey> getAllSurveyForAUser(int userId){
+       // int[] args={userId};
+        ArrayList<HolderSurvey> allSurveyData = new ArrayList<>();
+
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+      //  Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_SURVEY+" WHERE "+SURVEY_USER_ID+ "= "+ userId, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM table_survey WHERE survey_user_id = "+ userId, null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            for (int i = 0; i < cursor.getCount(); i++) {
+                allSurveyData.add(new HolderSurvey(
+                        cursor.getInt(cursor.getColumnIndex(SURVEY_ID)),
+                        cursor.getInt(cursor.getColumnIndex(SURVEY_SECTOR_ID)),
+                        cursor.getInt(cursor.getColumnIndex(SURVEY_USER_ID)),
+                        cursor.getString(cursor.getColumnIndex(SURVEY_NAME))
+                ));
+                cursor.moveToNext();
+            }
+            cursor.close();
+            db.close();
+        }
+
+        return allSurveyData;
+    }
+
   /*  public long deleteSurvey(int survey_id) {
         SQLiteDatabase db = getWritableDatabase();
         db.delete(TABLE_SURVEY, SURVEY_ID + "=" + survey_id, null);
@@ -897,7 +1014,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public long insertAnswerMode(HolderAnswerMode holderAnswerMode) {
         long row = -1;
-        SQLiteDatabase db = getWritableDatabase();
 
         ContentValues cv = new ContentValues();
         cv.put(ANSWER_MODE_MIN_VALUE, holderAnswerMode.minValue);
@@ -908,8 +1024,10 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(ANSWER_MODE_HINT, holderAnswerMode.hint);
         cv.put(ANSWER_MODE_SHOW_HIDE, holderAnswerMode.show_hide);
 
-       // HolderQuestion data = getQuestion(holderQuestion.questionId);
+        // HolderQuestion data = getQuestion(holderQuestion.questionId);
         HolderAnswerMode data = getAnswerMode(holderAnswerMode.questionId);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
         if (data == null || data.questionId == -1)
             row = db.insert(TABLE_ANSWER_MODE, null, cv);
         db.close();
@@ -935,7 +1053,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderAnswerMode> getAnswerMode(int id, String limit) {
         ArrayList<HolderAnswerMode> answerModeData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 
@@ -983,7 +1102,6 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
     public long insertUserAccess(HolderUserAccess holderUserAccess) {
-        SQLiteDatabase db = getWritableDatabase();
         long row = -1;
         ContentValues cv = new ContentValues();
         cv.put(USER_ACCESS_USER_ID, holderUserAccess.userID);
@@ -992,8 +1110,11 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
         HolderUserAccess data = getUserAccess(holderUserAccess.userID);
-        if (data == null || data.userID == -1)
-        row = db.insert(TABLE_USER_ACCESS, null, cv);
+        if(db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
+        if (data == null || data.userID == -1) {
+            row = db.insert(TABLE_USER_ACCESS, null, cv);
+        }
         db.close();
          return row;
     }
@@ -1014,7 +1135,8 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderUserAccess> getUserAccess(int id, String limit) {
         ArrayList<HolderUserAccess> userAccessesData = new ArrayList<>();
-        SQLiteDatabase db = getReadableDatabase();
+        if(db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
 
         Cursor cursor;
 

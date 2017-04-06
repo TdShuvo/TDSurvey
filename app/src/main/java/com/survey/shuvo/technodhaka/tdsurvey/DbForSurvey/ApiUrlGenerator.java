@@ -7,12 +7,12 @@ public class ApiUrlGenerator {
     private final String BASE_URL = "http://gaanbox.com/api/?";
     private final String API_KEY = "key=57ccf93abbd2f996b50f28a2d7db505d";
 
-    public String getAlbumApiLink(int maxId) {
-        return BASE_URL + API_KEY + "&table=album&after=" + maxId;
-    }
 
-    public static String getQuestionApiLink() {
-        return "http://10.0.2.2:8080/api/values/GetQuestion?id=1002";
+
+    public static String getQuestionApiLink(int Id) {
+        return "http://10.0.2.2:8080/api/values/GetQuestion?id="+ Id;
+
+
     }
 
     public static String getCountryApiLink() {
@@ -45,14 +45,15 @@ public class ApiUrlGenerator {
 
     }
 
-    public static String getUserApiLink(int userId) {
-        return "http://10.0.2.2:8080/api/values/getUser?UserId=" + userId;
+    public static String getUserApiLink(String userName, String Password) {
+        return "http://10.0.2.2:8080/api/values/getUser?user_name=" + userName+"&password="+ Password;
+
+
 
     }
 
-    public static String getSurveyApiLink(int surveyId) {
-        return "http://10.0.2.2:8080/api/values/getSurveyName?SurveyId=" + surveyId;
-
+    public static String getSurveyApiLink(int userID) {
+        return "http://10.0.2.2:8080/api/values/getSurveyName?UserId=" + userID;
 
     }
 }
