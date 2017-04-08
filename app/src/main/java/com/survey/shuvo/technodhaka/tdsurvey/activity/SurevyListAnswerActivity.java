@@ -89,9 +89,13 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
                 if (Answer.size() == 0){
                     Toast.makeText(context, "You do not Complete any survey.", Toast.LENGTH_SHORT).show();
                 }
+             //   ArrayList<HolderAnswer> holderA = new ArrayList<HolderAnswer>();
                 for(int i =0;i<Answer.size();i++){
                     HolderAnswer holderAnswer = Answer.get(i);
-                    new SendPostRequest(holderAnswer);
+                 //  holderA.add(holderAnswer);
+
+                    new SendPostRequest(holderAnswer).execute();
+                   // new SendPostRequest(holderAnswer).execute(holderAnswer);
                 }
 
               /*  Intent intent = new Intent(GetSurveyActivity.this, ResponseRecordingActivity.class);
@@ -117,7 +121,6 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
         context = getApplicationContext();
         listView = (ListView) findViewById(R.id.lst_answer_survey);
         dbHelper = new DbHelper(context);
-
 
     }
 
@@ -239,6 +242,82 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
             }
 
         }
+
+    /*    protected HolderAnswer doInBackground(HolderAnswer... holderAnswer) {
+
+            HolderAnswer holAnswer = holderAnswer[0];
+
+            try {
+                String request = "http://10.0.2.2:8080/api/values/putAnswer/";
+                URL url = new URL(request); // here is your URL path
+
+                JSONObject answer = new JSONObject();
+
+                answer.put("answer",holAnswer.answer);// Set the parameter and the
+                answer.put("user_id", String.valueOf(holAnswer.userId));
+                answer.put("country_id", String.valueOf(holAnswer.countryId));
+                answer.put("question_id", String.valueOf(holAnswer.questionId));
+                answer.put("qt_id", String.valueOf(holAnswer.questionTypeId));
+                answer.put("scequence_id", String.valueOf(holAnswer.secquenceId));
+                //Log.e("params",postDataParams.toString());
+
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setReadTimeout(15000   );
+                conn.setConnectTimeout(15000  );
+                conn.setDoInput(false);
+                // conn.setDoOutput(true);
+                conn.setRequestMethod("POST");
+                //  conn.setRequestMethod("putAnswer");
+                // conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+                conn.setRequestProperty("Content-Type", "application/json");
+                // conn.setRequestProperty("charset", "utf-8");
+                conn.setUseCaches (false);
+
+
+
+                OutputStream os = conn.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(String.valueOf(answer));
+                // writer.write(getPostDataString(answer));
+
+                writer.flush();
+                writer.close();
+                os.close();
+
+                int responseCode=conn.getResponseCode();
+
+                if (responseCode == HttpsURLConnection.HTTP_OK) {
+
+                    BufferedReader in=new BufferedReader(new
+                            InputStreamReader(
+                            conn.getInputStream()));
+
+                    StringBuffer sb = new StringBuffer("");
+                    String line="";
+
+                    while((line = in.readLine()) != null) {
+
+                        sb.append(line);
+                        break;
+                    }
+
+                    in.close();
+                   // return holAnswer.toString();
+                    return holAnswer;
+
+                }
+                else {
+                   // return new String("false : "+responseCode);
+                    return holAnswer;
+                }
+            }
+            catch(Exception e){
+                //return new String("Exception: " + e.getMessage());
+                return holAnswer;
+            }
+
+        }*/
 
         @Override
         protected void onPostExecute(String result) {

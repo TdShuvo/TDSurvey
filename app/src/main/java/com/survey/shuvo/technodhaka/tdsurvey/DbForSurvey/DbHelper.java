@@ -368,7 +368,7 @@ public class DbHelper extends SQLiteOpenHelper {
         HolderAnswer data = getAnswer(holderAnswer.answerId);
         if(db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
-        if (data == null || data.questionId == -1)
+        if (data == null || data.answerId == -1)
             row = db.insert(TABLE_ANSWER, null, cv);
         db.close();
         return row;

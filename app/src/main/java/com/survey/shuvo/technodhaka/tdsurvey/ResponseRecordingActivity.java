@@ -14,61 +14,15 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
+
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.DbHelper;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderAnswer;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestion;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderQuestionType;
 import com.survey.shuvo.technodhaka.tdsurvey.DbForSurvey.HolderUser;
-import com.survey.shuvo.technodhaka.tdsurvey.controller.AppController;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ByteArrayEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -143,8 +97,10 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         btnNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-               // answerResponse=loadResponseView().get
-                if (answerResponse != null) {
+                // answerResponse=loadResponseView().get
+               // answerResponse = "Checking the system.";
+                //  answerResponse = loadResponseView(holderQuestion.questionTypeId);
+                if (answerResponse.isEmpty()) {
                     Toast.makeText(ResponseRecordingActivity.this, "Give Your response.", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -188,9 +144,14 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         if (question.size() > 0) {
             for (int i = 0; i < question.size(); i++) {
                 HolderQuestion holderQuestion = question.get(i);
+                /**
+                 * Can add some value in answerResponse to check that
+                 * whether the data is going to the local database or not....
+                 */
                 answerResponse = loadResponseView(holderQuestion.questionTypeId);
+               // answerResponse = "Testing the response.";
                 //holderQuestion.
-                //   loadAnswer(holderQuestion.questionId,holderQuestion.questionTypeId,1,holderQuestion.surveyId);
+                loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
                 // Log.e("QuestionType", String.valueOf(question.get(i).questionTypeId));
                 txtQuestion.setText(question.get(i).question);
 
@@ -212,7 +173,6 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 showOneView(edtText);
                 userResponse = String.valueOf(edtText.getText());
                 break;
-
             case 2:
                 showOneView(edtText);
                 userResponse = String.valueOf(edtText.getText());
@@ -272,7 +232,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             case 1:
                 //showOneView(edtText);
                 response = edtText.getText().toString().trim();
-                if (response != null) {
+                if (!response.isEmpty()) {
                     dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtText.setText("");
@@ -286,7 +246,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 break;
             case 3: //showOneView(edtText);
                 response = edtText.getText().toString().trim();
-                if (response != null) {
+                if (!response.isEmpty()) {
                     dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtText.setText("");
