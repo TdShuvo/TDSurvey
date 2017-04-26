@@ -19,7 +19,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private SQLiteDatabase db;
     Context context;
-    private String myPath= "";
+    private String myPath = "";
     public static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "survey_td";
 
@@ -223,7 +223,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     public long insertQuestion(HolderQuestion holderQuestion) {
         long row = -1;
-       // db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
+        // db = SQLiteDatabase.openDatabase(myPath, null, SQLiteDatabase.NO_LOCALIZED_COLLATORS | SQLiteDatabase.OPEN_READWRITE);
         ContentValues cv = new ContentValues();
         cv.put(QUESTION_ID, holderQuestion.questionId);
         cv.put(QUESTION_QUESTION_TYPE_ID, holderQuestion.questionTypeId);
@@ -262,7 +262,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderQuestion> getQuestion(int id, String limit, int offset) {
         ArrayList<HolderQuestion> questionData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -296,13 +296,13 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
 
-    public ArrayList<HolderQuestion> getQuestionsForSurveyId(int surveyID, int offset){
+    public ArrayList<HolderQuestion> getQuestionsForSurveyId(int surveyID, int offset) {
         ArrayList<HolderQuestion> questionData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
-      //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
-        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_QUESTION + " WHERE question_survey_id = "+ surveyID+" Limit 1 Offset " + offset, null);
+        //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
+        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_QUESTION + " WHERE question_survey_id = '" + surveyID + "' Limit 1 Offset " + offset, null);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -366,7 +366,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(ANSWER, holderAnswer.answer);
 
         HolderAnswer data = getAnswer(holderAnswer.answerId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.answerId == -1)
             row = db.insert(TABLE_ANSWER, null, cv);
@@ -391,7 +391,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderAnswer> getAnswer(int id, String limit) {
         ArrayList<HolderAnswer> answerData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -426,14 +426,14 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
 
-    public ArrayList<HolderAnswer> getAnswerForSurveyId(int surveyId){
+    public ArrayList<HolderAnswer> getAnswerForSurveyId(int surveyId) {
         ArrayList<HolderAnswer> answerData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
 
-        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_ANSWER + " WHERE answer_survey_id = "+ surveyId, null);
+        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_ANSWER + " WHERE answer_survey_id = " + surveyId, null);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -482,7 +482,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(USER_COUNTRY_ID, holderUser.countryId);
 
         HolderUser data = getUser(holderUser.userId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
 
         if (data == null || data.userId == -1)
@@ -509,7 +509,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderUser> getUser(int id, String limit) {
         ArrayList<HolderUser> userData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -542,41 +542,48 @@ public class DbHelper extends SQLiteOpenHelper {
 
         return userData;
     }
-// Where is the error? Is it working now?
+
+    // Where is the error? Is it working now?
     // na dada. dada i think problem is Sal_sal
     // can i try with another usr name
     // OK
     public void showAllUser() {
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen())
+            db.close();
         db = getReadableDatabase();
-        Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user ",null);
-        if (cursorCountryId != null && cursorCountryId.getCount() > 0){
+        Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user ", null);
+        if (cursorCountryId != null && cursorCountryId.getCount() > 0) {
             cursorCountryId.moveToFirst();
-            Log.e("PD_DEBUG","User Data: "+
-                    cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_ID))+ "\n"+
-                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_NAME))+ "\n"+
-                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_PASSWORD))+ "\n"+
-                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_USER_NAME))+ "\n"+
-                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_EMAIL))+ "\n"+
-                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_GENDER))+ "\n"+
+            Log.e("PD_DEBUG", "User Data: " +
+                    cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_ID)) + "\n" +
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_NAME)) + "\n" +
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_PASSWORD)) + "\n" +
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_USER_NAME)) + "\n" +
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_EMAIL)) + "\n" +
+                    cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_GENDER)) + "\n" +
                     cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_COUNTRY_ID))
             );
+            cursorCountryId.close();
         }
+
+        db.close();
     }
-    public HolderUser getUserInfo(String user_name, String password){
+
+    public HolderUser getUserInfo(String user_name, String password) {
 
         showAllUser();
 
         HolderUser holderUser = null;
-      //  String cursor = "select * From "+ TABLE_USER +" where user_name = '"+ user_name+"' and password = '"+password+"';";
+        //  String cursor = "select * From "+ TABLE_USER +" where user_name = '"+ user_name+"' and password = '"+password+"';";
         //  String cursor = "SELECT * FROM "+ TABLE_USER +" WHERE user_name = '"+ user_name+"' and password = '"+password+"';";
 
         //  rawQuery("SELECT id, name FROM people WHERE name = ? AND id = ?", new String[] {"David", "2"});
 
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
-        Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user WHERE name = ? AND password = ?",new String[]{user_name,password});
-        if (cursorCountryId != null && cursorCountryId.getCount() > 0){
+      //  Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user WHERE name = ? AND password = ?", new String[]{user_name, password});
+        Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user WHERE name = '"+ user_name +"' AND password = '"+ password+"'",null);
+        if (cursorCountryId != null && cursorCountryId.getCount() > 0) {
             cursorCountryId.moveToFirst();
             holderUser = new HolderUser(
                     cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_ID)),
@@ -587,8 +594,8 @@ public class DbHelper extends SQLiteOpenHelper {
                     cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_GENDER)),
                     cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_COUNTRY_ID)));
         }
-      //  cursorCountryId.close();
-          //  db.close();
+        //  cursorCountryId.close();
+        //  db.close();
 
         return holderUser;
     }
@@ -613,7 +620,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderCountry data = getCountry(holderCountry.countryId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.countryId == -1)
             row = db.insert(TABLE_COUNTRY, null, cv);
@@ -638,7 +645,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderCountry> getCountry(int id, String limit) {
         ArrayList<HolderCountry> userData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -685,7 +692,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderQuestionType data = getQuestionType(holderQuestionType.questionTypeId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.questionTypeId == -1)
             row = db.insert(TABLE_QUESTION_TYPE, null, cv);
@@ -710,7 +717,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderQuestionType> getQuestionType(int id, String limit) {
         ArrayList<HolderQuestionType> questionTypesData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -758,7 +765,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSector data = getSector(holderSector.sectorId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.sectorId == -1)
             row = db.insert(TABLE_SECTOR, null, cv);
@@ -783,7 +790,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSector> getSector(int id, String limit) {
         ArrayList<HolderSector> sectorData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -825,7 +832,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
     public long insertSkip(HolderSkip holderSkip) {
-        long row=-1;
+        long row = -1;
         ContentValues cv = new ContentValues();
         cv.put(SKIP_ID, holderSkip.skipId);
         cv.put(SKIP_SURVEY_ID, holderSkip.surveyId);
@@ -835,10 +842,10 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSkip data = getSkip(holderSkip.skipId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.skipId == -1)
-            row= db.insert(TABLE_SKIP, null, cv);
+            row = db.insert(TABLE_SKIP, null, cv);
 
         db.close();
 
@@ -862,7 +869,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSkip> getSkip(int id, String limit) {
         ArrayList<HolderSkip> skipData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -917,7 +924,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
        /* HolderQuestion data = getQuestion(holderQuestion.questionId);*/
         HolderSurvey data = getSurvey(holderSurvey.surveyId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.surveyId == -1)
             row = db.insert(TABLE_SURVEY, null, cv);
@@ -942,7 +949,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderSurvey> getSurvey(int id, String limit) {
         ArrayList<HolderSurvey> surveyData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
@@ -973,15 +980,15 @@ public class DbHelper extends SQLiteOpenHelper {
         return surveyData;
     }
 
-    public ArrayList<HolderSurvey> getAllSurveyForAUser(int userId){
-       // int[] args={userId};
+    public ArrayList<HolderSurvey> getAllSurveyForAUser(int userId) {
+        // int[] args={userId};
         ArrayList<HolderSurvey> allSurveyData = new ArrayList<>();
 
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
-      //  Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_SURVEY+" WHERE "+SURVEY_USER_ID+ "= "+ userId, null);
-        Cursor cursor = db.rawQuery("SELECT * FROM table_survey WHERE survey_user_id = "+ userId, null);
+        //  Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_SURVEY+" WHERE "+SURVEY_USER_ID+ "= "+ userId, null);
+        Cursor cursor = db.rawQuery("SELECT * FROM table_survey WHERE survey_user_id = " + userId, null);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -1026,7 +1033,7 @@ public class DbHelper extends SQLiteOpenHelper {
 
         // HolderQuestion data = getQuestion(holderQuestion.questionId);
         HolderAnswerMode data = getAnswerMode(holderAnswerMode.questionId);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.questionId == -1)
             row = db.insert(TABLE_ANSWER_MODE, null, cv);
@@ -1053,16 +1060,16 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderAnswerMode> getAnswerMode(int id, String limit) {
         ArrayList<HolderAnswerMode> answerModeData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
 
-        if (id != -1 ) {
+        if (id != -1) {
             cursor = db.query(TABLE_ANSWER_MODE, null, ANSWER_MODE_QUESTION_ID + "=" + id, null, null, null, null);
-        } else if (id == -1 && limit != null ) {
+        } else if (id == -1 && limit != null) {
             cursor = db.query(TABLE_ANSWER_MODE, null, null, null, null, null, ANSWER_MODE_QUESTION_ID + " desc", limit);
-        } else  {
+        } else {
             cursor = db.query(TABLE_ANSWER_MODE, null, null, null, null, null, ANSWER_MODE_QUESTION_ID + " desc");
         }
 
@@ -1110,14 +1117,15 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
         HolderUserAccess data = getUserAccess(holderUserAccess.userID);
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getWritableDatabase();
         if (data == null || data.userID == -1) {
             row = db.insert(TABLE_USER_ACCESS, null, cv);
         }
         db.close();
-         return row;
+        return row;
     }
+
     public ArrayList<HolderUserAccess> getUserAccess() {
         return getUserAccess(-1, null);
     }
@@ -1135,16 +1143,16 @@ public class DbHelper extends SQLiteOpenHelper {
 
     private ArrayList<HolderUserAccess> getUserAccess(int id, String limit) {
         ArrayList<HolderUserAccess> userAccessesData = new ArrayList<>();
-        if(db != null && db.isOpen()) db.close();
+        if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         Cursor cursor;
 
-        if (id != -1 ) {
+        if (id != -1) {
             cursor = db.query(TABLE_USER_ACCESS, null, USER_ACCESS_USER_ID + "=" + id, null, null, null, null);
-        } else if (id == -1 && limit != null ) {
+        } else if (id == -1 && limit != null) {
             cursor = db.query(TABLE_USER_ACCESS, null, null, null, null, null, USER_ACCESS_USER_ID + " desc", limit);
-        } else  {
+        } else {
             cursor = db.query(TABLE_USER_ACCESS, null, null, null, null, null, USER_ACCESS_USER_ID + " desc");
         }
 

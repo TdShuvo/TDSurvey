@@ -92,7 +92,7 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
              //   ArrayList<HolderAnswer> holderA = new ArrayList<HolderAnswer>();
                 for(int i =0;i<Answer.size();i++){
                     HolderAnswer holderAnswer = Answer.get(i);
-                 //  holderA.add(holderAnswer);
+                 //;  holderA.add(holderAnswer);
 
                     new SendPostRequest(holderAnswer).execute();
                    // new SendPostRequest(holderAnswer).execute(holderAnswer);

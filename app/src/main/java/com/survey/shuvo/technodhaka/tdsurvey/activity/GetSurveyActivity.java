@@ -85,10 +85,10 @@ public class GetSurveyActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 //                WebView webView = new WebView(context);
                 hs = (HolderSurvey) surveyAdapter.getItem(position);
-                if (LoginActivity.secondTimeLogIn == false){
+              /*  if (LoginActivity.secondTimeLogIn == false){*/
                     GetQuestionJson g = new GetQuestionJson(hs.surveyId);
                     g.execute();
-                }
+               // }
 
 
                 Intent intent = new Intent(GetSurveyActivity.this, ResponseRecordingActivity.class);

@@ -146,7 +146,12 @@ public class LoginActivity extends AppCompatActivity {
 
     public  void isValidUser(final String user_name, final String password){
 
-        String JSON_URL = "http://10.0.2.2:8080/api/values/GetUserId?user_name=" + user_name + "&password="+ password ;
+        /**
+         *  This link is for genymotion ....
+         */
+
+        String JSON_URL = "http://tshuvo-001-site1.htempurl.com/api/values/GetUserId?user_name=" + user_name + "&password="+ password ;
+    //    String JSON_URL = "http://10.0.2.2:8080/api/values/GetUserId?user_name=" + user_name + "&password="+ password ;
       //  String JSON_URL = "192.168.0.1:8080/api/values/GetUserId?user_name=" + user_name + "&password="+ password ;
 
       //  Log.d("shuvoUrl",JSON_URL);
@@ -179,8 +184,8 @@ public class LoginActivity extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
+                      //  Log.e("ShuvoLogin",error.getMessage());
                         Toast.makeText(LoginActivity.this,"shuvo :"+ error.getMessage(),Toast.LENGTH_LONG).show();
-                       // Log.e("Shuvo",error.getMessage());
                     }
                 });
 

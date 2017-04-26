@@ -99,21 +99,29 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // answerResponse=loadResponseView().get
                // answerResponse = "Checking the system.";
-                //  answerResponse = loadResponseView(holderQuestion.questionTypeId);
+                  answerResponse = loadResponseView(mQusIndex);
+
                 if (answerResponse.isEmpty()) {
-                    Toast.makeText(ResponseRecordingActivity.this, "Give Your response.", Toast.LENGTH_SHORT).show();
+                    Log.e("MOR",answerResponse);
+                    Toast.makeText(ResponseRecordingActivity.this, "Give Your response."+ answerResponse, Toast.LENGTH_SHORT).show();
                     return;
                 }
+
                 ++mQusIndex;
-                if (mQusIndex <= totalQuestionOfASurvey)
+                if (mQusIndex <= totalQuestionOfASurvey) {
                     loadQuestion(mQusIndex, surveyID);
-                else if (mQusIndex > totalQuestionOfASurvey)
+                }
+                else if (mQusIndex > totalQuestionOfASurvey) {
                     mQusIndex = totalQuestionOfASurvey;
+                }
                 getQuestionType();
+              /*  List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, mQusIndex - 1);
+                //  Log.e("shuvoQuestion",question.question);
+                if (question.size() > 0) {
+                    for (int i = 0; i < question.size(); i++) {
+                        HolderQuestion holderQuestion = question.get(i);
 
-                //if ()
-
-                //   new SendPostRequest().execute();
+                loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);*/
 
             }
         });
@@ -139,7 +147,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     public void loadQuestion(int id, int surveyID) {
         //  Log.e("shuvogivenId", String.valueOf(id));
         // List<HolderQuestion> question = dbHelper.getQuestion("1", mQusIndex - 1);
-        List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, mQusIndex - 1);
+        List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, id - 1);
         //  Log.e("shuvoQuestion",question.question);
         if (question.size() > 0) {
             for (int i = 0; i < question.size(); i++) {
@@ -148,10 +156,10 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                  * Can add some value in answerResponse to check that
                  * whether the data is going to the local database or not....
                  */
-                answerResponse = loadResponseView(holderQuestion.questionTypeId);
+               loadResponseView(holderQuestion.questionTypeId);
                // answerResponse = "Testing the response.";
                 //holderQuestion.
-                loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
+               loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
                 // Log.e("QuestionType", String.valueOf(question.get(i).questionTypeId));
                 txtQuestion.setText(question.get(i).question);
 
@@ -232,6 +240,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             case 1:
                 //showOneView(edtText);
                 response = edtText.getText().toString().trim();
+                answerResponse = response;
                 if (!response.isEmpty()) {
                     dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
@@ -239,6 +248,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 break;
             case 2: //showOneView(edtText);
                 response = edtText.getText().toString().trim();
+                answerResponse = response;
                 if (response != null) {
                     dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
@@ -246,6 +256,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 break;
             case 3: //showOneView(edtText);
                 response = edtText.getText().toString().trim();
+                answerResponse = response;
                 if (!response.isEmpty()) {
                     dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
