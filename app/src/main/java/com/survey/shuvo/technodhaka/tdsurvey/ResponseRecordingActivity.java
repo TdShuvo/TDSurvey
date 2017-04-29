@@ -57,10 +57,15 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     EditText edtText, edtNumber, edtDecimal;
     int totalQuestionOfASurvey;
 
-    int mQusIndex = 14;
+    String visibleView;
+
+    int mQusIndex;
+    int sequenceId;
     int surveyID;
     HolderUser holderUser;
     HolderAnswer holderAnswer;
+    HolderQuestion holderQuestion;
+
 
     String answerResponse;
 
@@ -97,10 +102,16 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         btnNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // answerResponse=loadResponseView().get
-               // answerResponse = "Checking the system.";
-                  answerResponse = loadResponseView(mQusIndex);
-
+                //  answerResponse = loadResponseView(mQusIndex);
+               String response = edtText.getText().toString().trim();
+                sequenceId = dbHelper.getSequenceId(holderQuestion.questionId,surveyID);
+                Log.e("ShuvoQuestionId", String.valueOf(holderQuestion.questionId));
+                if (sequenceId == 0){
+                    sequenceId = 1;
+                }else{
+                    sequenceId++;
+                }
+                answerResponse = response;
                 if (answerResponse.isEmpty()) {
                     Log.e("MOR",answerResponse);
                     Toast.makeText(ResponseRecordingActivity.this, "Give Your response."+ answerResponse, Toast.LENGTH_SHORT).show();
@@ -109,19 +120,18 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 
                 ++mQusIndex;
                 if (mQusIndex <= totalQuestionOfASurvey) {
+                    insertAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, sequenceId, holderQuestion.surveyId);
                     loadQuestion(mQusIndex, surveyID);
+
+
+                    Log.e("ShuvoQuestionIndex", String.valueOf(mQusIndex));
+
                 }
                 else if (mQusIndex > totalQuestionOfASurvey) {
                     mQusIndex = totalQuestionOfASurvey;
+                    sequenceId++;
                 }
-                getQuestionType();
-              /*  List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, mQusIndex - 1);
-                //  Log.e("shuvoQuestion",question.question);
-                if (question.size() > 0) {
-                    for (int i = 0; i < question.size(); i++) {
-                        HolderQuestion holderQuestion = question.get(i);
 
-                loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);*/
 
             }
         });
@@ -130,10 +140,12 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 --mQusIndex;
-                if (mQusIndex >= 1)
+                if (mQusIndex >= 1){
                     loadQuestion(mQusIndex, surveyID);
-                else if (mQusIndex < 1)
-                    mQusIndex = 0;
+                    String answer = loadAnswer(holderQuestion.questionId,surveyID,sequenceId);
+                    loadResponseView(holderQuestion.questionTypeId,answer);
+                }
+                else mQusIndex = 0;
             }
         });
 
@@ -145,72 +157,85 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     }
 
     public void loadQuestion(int id, int surveyID) {
-        //  Log.e("shuvogivenId", String.valueOf(id));
-        // List<HolderQuestion> question = dbHelper.getQuestion("1", mQusIndex - 1);
-        List<HolderQuestion> question = dbHelper.getQuestionsForSurveyId(surveyID, id - 1);
-        //  Log.e("shuvoQuestion",question.question);
-        if (question.size() > 0) {
-            for (int i = 0; i < question.size(); i++) {
-                HolderQuestion holderQuestion = question.get(i);
-                /**
-                 * Can add some value in answerResponse to check that
-                 * whether the data is going to the local database or not....
-                 */
-               loadResponseView(holderQuestion.questionTypeId);
-               // answerResponse = "Testing the response.";
-                //holderQuestion.
-               loadAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
-                // Log.e("QuestionType", String.valueOf(question.get(i).questionTypeId));
-                txtQuestion.setText(question.get(i).question);
 
-            }
+
+        List<HolderQuestion> questionList = dbHelper.getQuestionsForSurveyId(surveyID, id - 1);
+        if (questionList != null && questionList.size() > 0) {
+                holderQuestion = questionList.get(0);
+               visibleView =  loadResponseView(holderQuestion.questionTypeId,null);
+
+              // insertAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
+                txtQuestion.setText(questionList.get(0).question);
+
         }
 
-
-       /* ArrayList<HolderQuestion> quesSet = dbHelper.getQuestion();
-        quesSet.size();
-        Log.e("ds",quesSet.toString());
-*/
     }
 
-    public String loadResponseView(int qt_id) {
+    public String loadResponseView(int qt_id,String answer) {
 
         String userResponse = null;
         switch (qt_id) {
             case 1:
                 showOneView(edtText);
+                if (answer != null){
+                    edtText.setText(answer);
+                }
                 userResponse = String.valueOf(edtText.getText());
                 break;
             case 2:
                 showOneView(edtText);
+                if (answer != null){
+                    edtText.setText(answer);
+                }
                 userResponse = String.valueOf(edtText.getText());
                 break;
             case 3:
                 showOneView(edtText);
+                if (answer != null){
+                    edtText.setText(answer);
+                }
                 userResponse = String.valueOf(edtText.getText());
                 break;
             case 4:
                 showOneView(edtNumber);
+                if (answer != null){
+                    edtNumber.setText(answer);
+                }
                 userResponse = String.valueOf(edtNumber.getText());
                 break;
             case 5:
                 showOneView(edtDecimal);
+                if (answer != null){
+                    edtDecimal.setText(answer);
+                }
                 userResponse = String.valueOf(edtDecimal.getText());
                 break;
             case 6:
                 showOneView(txtDate);
+                if (answer != null){
+                    txtDate.setText(answer);
+                }
                 userResponse = String.valueOf(txtDate.getText());
                 break;
             case 7:
                 showOneView(txtTime);
+                if (answer != null){
+                    txtTime.setText(answer);
+                }
                 userResponse = String.valueOf(txtTime.getText());
                 break;
             case 8:
                 showOneView(txtDataAndTime);
+                if (answer != null){
+                    txtDataAndTime.setText(answer);
+                }
                 userResponse = String.valueOf(txtDataAndTime.getText());
                 break;
             case 9:
                 showOneView(txtGps);
+                if (answer != null){
+                    txtGps.setText(answer);
+                }
                 userResponse = String.valueOf(txtGps.getText());
                 break;
             default:
@@ -221,7 +246,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     }
 
 
-    public void loadAnswer(int questionID, int qt_id, int sequenceId, int surveyId) {
+    public void insertAnswer(int questionID, int qt_id, int sequenceId, int surveyId) {
         String response = null;
         String user_name = null, password = null;
         SharedPreferences prefs = getSharedPreferences(SURVEY_USER, MODE_PRIVATE);
@@ -298,9 +323,16 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 
     }
 
+
+    public String loadAnswer(int questionId, int surveyId,int sequenceId){
+        String answer =  dbHelper.getAnswerForQuesId(questionId,surveyId,sequenceId);
+        return answer;
+    }
+
     public void showOneView(View view) {
         hideView();
         view.setVisibility(View.VISIBLE);
+
     }
 
     public void hideView() {
@@ -337,8 +369,10 @@ public class ResponseRecordingActivity extends AppCompatActivity {
 
     public void getQuestionType() {
         ArrayList<HolderQuestionType> qtArray = dbHelper.getQuestionType();
+        String qt;
         for (int i = 0; i < qtArray.size(); i++) {
-            //   qtArray.get(i).questionTypeName;
+            qt =   qtArray.get(i).questionTypeName;
+            Log.e("ShuvoQT",qt);
         }
         // Log.e("qtArray",qtArray.toString());
     }
@@ -541,8 +575,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         else {
 
 
-            *
-             *  TODO: 9/29/2016  save method & update method
+              TODO: 9/29/2016  save method & update method
 
 //                    saveData("");
 

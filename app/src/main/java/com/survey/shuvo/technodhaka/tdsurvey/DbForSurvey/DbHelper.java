@@ -426,6 +426,44 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
 
+    public int getSequenceId(int questionId, int surveyId){
+        if (db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+        int seqId = 0;
+        String query = "Select answer_sequence_id from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+
+                ANSWER_SURVEY_ID + " = '"+ surveyId+"'  ORDER BY "+ ANSWER_SEQUENCE_ID + " DESC LIMIT 1";
+
+
+
+        Cursor cursor = db.rawQuery(query,null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            seqId =  cursor.getInt(cursor.getColumnIndex(ANSWER_SEQUENCE_ID));
+        }
+        cursor.close();
+        db.close();
+        return seqId;
+    }
+
+    public String getAnswerForQuesId(int questionId, int surveyId,int sequenceId){
+        if (db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+        String answer = null;
+        String query = "Select answer from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+ ANSWER_SURVEY_ID + " = '"+ surveyId+"' and "+ ANSWER_SEQUENCE_ID+ " = '"+ sequenceId+"'";
+
+        Cursor cursor = db.rawQuery(query,null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            answer =  cursor.getString(cursor.getColumnIndex(ANSWER));
+        }
+        cursor.close();
+        db.close();
+       return answer;
+    }
+
+
     public ArrayList<HolderAnswer> getAnswerForSurveyId(int surveyId) {
         ArrayList<HolderAnswer> answerData = new ArrayList<>();
         if (db != null && db.isOpen()) db.close();
@@ -554,7 +592,7 @@ public class DbHelper extends SQLiteOpenHelper {
         Cursor cursorCountryId = db.rawQuery("SELECT * FROM table_user ", null);
         if (cursorCountryId != null && cursorCountryId.getCount() > 0) {
             cursorCountryId.moveToFirst();
-            Log.e("PD_DEBUG", "User Data: " +
+          /*  Log.e("PD_DEBUG", "User Data: " +
                     cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_ID)) + "\n" +
                     cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_NAME)) + "\n" +
                     cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_PASSWORD)) + "\n" +
@@ -562,7 +600,7 @@ public class DbHelper extends SQLiteOpenHelper {
                     cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_EMAIL)) + "\n" +
                     cursorCountryId.getString(cursorCountryId.getColumnIndex(USER_GENDER)) + "\n" +
                     cursorCountryId.getInt(cursorCountryId.getColumnIndex(USER_COUNTRY_ID))
-            );
+            );*/
             cursorCountryId.close();
         }
 
@@ -988,7 +1026,11 @@ public class DbHelper extends SQLiteOpenHelper {
         db = getReadableDatabase();
 
         //  Cursor cursor = db.rawQuery("SELECT * FROM "+TABLE_SURVEY+" WHERE "+SURVEY_USER_ID+ "= "+ userId, null);
-        Cursor cursor = db.rawQuery("SELECT * FROM table_survey WHERE survey_user_id = " + userId, null);
+        String query = "Select * from "+TABLE_SURVEY + " Where "+ SURVEY_USER_ID +" = '"+ userId +"'";
+        Log.e("ShuvoQuery",query);
+        Cursor cursor = db.rawQuery(query, null);
+
+        Log.e("ShuvoCursor", String.valueOf(cursor.getCount()));
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {

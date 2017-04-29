@@ -102,7 +102,6 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
 
-
             }
         });
 
@@ -170,6 +169,9 @@ public class LoginActivity extends AppCompatActivity {
                             editor.commit();
                             GetUserJson g=new GetUserJson(user_name,password);
                             g.execute();
+
+
+                           // GetSurveyJson g = new GetSurveyJson()
 
                             startActivity(new Intent(LoginActivity.this, MainPageActivity.class));
 
