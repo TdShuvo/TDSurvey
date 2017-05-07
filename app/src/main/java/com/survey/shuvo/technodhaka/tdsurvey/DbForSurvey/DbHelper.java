@@ -20,7 +20,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private SQLiteDatabase db;
     Context context;
     private String myPath = "";
-    public static final int DATABASE_VERSION = 1;
+    public static final int DATABASE_VERSION = 2;
     private static final String DATABASE_NAME = "survey_td";
 
     private static final String CREATE_TABLE_IF_NOT_EXISTS = "CREATE TABLE IF NOT EXISTS ";
@@ -87,6 +87,7 @@ public class DbHelper extends SQLiteOpenHelper {
     private final static String ANSWER_SEQUENCE_ID = "answer_sequence_id";
     private final static String ANSWER_SURVEY_ID = "answer_survey_id";
     private final static String ANSWER = "answer";
+    private final static String ANSWER_FLAG = "answer_flag";
 
 
     private final static String QUESTION_SURVEY_ID = "question_survey_id";
@@ -129,7 +130,8 @@ public class DbHelper extends SQLiteOpenHelper {
             + ANSWER_QUESTION_TYPE_ID + " INTEGER,"
             + ANSWER_SEQUENCE_ID + " INTEGER,"
             + ANSWER_SURVEY_ID + " INTEGER,"
-            + ANSWER + " TEXT)";
+            + ANSWER + " TEXT,"
+            + ANSWER_FLAG + " INTEGER)";
 
     private final static String QUERY_CREATE_SKIP = CREATE_TABLE_IF_NOT_EXISTS + TABLE_SKIP + "("
             + SKIP_ID + " INTEGER PRIMARY KEY,"
@@ -297,12 +299,14 @@ public class DbHelper extends SQLiteOpenHelper {
 
 
     public ArrayList<HolderQuestion> getQuestionsForSurveyId(int surveyID, int offset) {
+
         ArrayList<HolderQuestion> questionData = new ArrayList<>();
         if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         //  Cursor cursor = db.rawQuery("SELECT * FROM table_question WHERE question_survey_id = "+surveyID,null);
-        Cursor cursor = db.rawQuery("SELECT * From " + TABLE_QUESTION + " WHERE question_survey_id = '" + surveyID + "' Limit 1 Offset " + offset, null);
+        String query = "SELECT * From " + TABLE_QUESTION + " WHERE question_survey_id = '" + surveyID + "' Limit 1 Offset " + offset;
+        Cursor cursor = db.rawQuery(query, null);
         if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
             for (int i = 0; i < cursor.getCount(); i++) {
@@ -317,7 +321,7 @@ public class DbHelper extends SQLiteOpenHelper {
             cursor.close();
             db.close();
         }
-
+       // Log.e("ShuvoQuery",query);
         return questionData;
     }
 
@@ -364,6 +368,7 @@ public class DbHelper extends SQLiteOpenHelper {
         cv.put(ANSWER_SEQUENCE_ID, holderAnswer.secquenceId);
         cv.put(ANSWER_SURVEY_ID, holderAnswer.surveyId);
         cv.put(ANSWER, holderAnswer.answer);
+        cv.put(ANSWER_FLAG, holderAnswer.answer_flag);
 
         HolderAnswer data = getAnswer(holderAnswer.answerId);
         if (db != null && db.isOpen()) db.close();
@@ -414,7 +419,8 @@ public class DbHelper extends SQLiteOpenHelper {
                         cursor.getInt(cursor.getColumnIndex(ANSWER_QUESTION_TYPE_ID)),
                         cursor.getInt(cursor.getColumnIndex(ANSWER_SEQUENCE_ID)),
                         cursor.getInt(cursor.getColumnIndex(ANSWER_SURVEY_ID)),
-                        cursor.getString(cursor.getColumnIndex(ANSWER))
+                        cursor.getString(cursor.getColumnIndex(ANSWER)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_FLAG))
                 ));
                 cursor.moveToNext();
             }
@@ -425,13 +431,66 @@ public class DbHelper extends SQLiteOpenHelper {
         return answerData;
     }
 
+    public void updateAnswerFlag(int answerId){
+        if (db != null && db.isOpen()) db.close();
+        db = getWritableDatabase();
 
-    public int getSequenceId(int questionId, int surveyId){
+      /*  String query = "UPDATE "+ TABLE_ANSWER + " SET "+ ANSWER_FLAG + " = 1  Where "+
+                ANSWER_ANSWER_ID + " = '"+ answerId+"'";
+        Cursor cursor = db.rawQuery(query,null);*/
+
+        ContentValues cv = new ContentValues();
+        cv.put(ANSWER_FLAG, 1);
+       int row =db.update(TABLE_ANSWER, cv, ANSWER_ANSWER_ID + "= " + answerId,null);
+
+        Log.d("Update","row "+row +" affect ");
+//        cursor.close();*/
+        db.close();
+
+    }
+
+    public int getAnswerId(int userID, int surveyId, int questionID, int sequenceId, int flag){
+        if (db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+        int answerId = 0;
+        // // TODO: 4/30/2017 upgrade the query
+
+        /**
+         *  Answer id 1 means the value is already synced ...
+         */
+
+        if (flag == 1){
+           return answerId;
+        }
+
+        String query = "Select "+ ANSWER_ANSWER_ID + " from "+ TABLE_ANSWER + " Where "+
+                ANSWER_USER_ID + " = '"+ userID+"' and "
+                + ANSWER_SURVEY_ID + " = '"+ surveyId+"' and "
+                + ANSWER_QUESTION_ID+ " = '"+ questionID+"' and "
+                + ANSWER_FLAG+ " = '"+ flag +"' and "
+                + ANSWER_SEQUENCE_ID + " = '"+ sequenceId+"'";
+
+
+
+        Cursor cursor = db.rawQuery(query,null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            answerId =  cursor.getInt(cursor.getColumnIndex(ANSWER_ANSWER_ID));
+        }
+        cursor.close();
+        db.close();
+        Log.e("ShuvoQuerySecId",query);
+        return answerId;
+    }
+
+    public int getSequenceId( int surveyId){
         if (db != null && db.isOpen()) db.close();
         db = getReadableDatabase();
 
         int seqId = 0;
-        String query = "Select answer_sequence_id from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+
+        // // TODO: 4/30/2017 upgrade the query
+        String query = "Select answer_sequence_id from "+ TABLE_ANSWER + " Where "+
                 ANSWER_SURVEY_ID + " = '"+ surveyId+"'  ORDER BY "+ ANSWER_SEQUENCE_ID + " DESC LIMIT 1";
 
 
@@ -443,7 +502,25 @@ public class DbHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         db.close();
+        Log.e("ShuvoQuerySecId",query);
         return seqId;
+    }
+
+    public String isAnsweredOrNot(int questionId, int surveyId,int sequenceId){
+        if (db != null && db.isOpen()) db.close();
+        db = getReadableDatabase();
+
+        String answer = null;
+        String query = "Select answer from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+ ANSWER_SURVEY_ID + " = '"+ surveyId+"' and "+ ANSWER_SEQUENCE_ID+ " = '"+ sequenceId +"'";
+        Cursor cursor = db.rawQuery(query,null);
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+            answer =  cursor.getString(cursor.getColumnIndex(ANSWER));
+        }
+        cursor.close();
+        db.close();
+        Log.e("ShuvoQuery",query);
+        return answer;
     }
 
     public String getAnswerForQuesId(int questionId, int surveyId,int sequenceId){
@@ -451,7 +528,8 @@ public class DbHelper extends SQLiteOpenHelper {
         db = getReadableDatabase();
 
         String answer = null;
-        String query = "Select answer from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+ ANSWER_SURVEY_ID + " = '"+ surveyId+"' and "+ ANSWER_SEQUENCE_ID+ " = '"+ sequenceId+"'";
+        String query = "Select answer from "+ TABLE_ANSWER + " Where "+ANSWER_QUESTION_ID +" = '" + questionId +"' and "+ ANSWER_SURVEY_ID + " = '"+ surveyId+"' and "+ ANSWER_SEQUENCE_ID+ " = '"+ sequenceId
+                +"'  ORDER BY "+ ANSWER_SEQUENCE_ID + " DESC LIMIT 1";
 
         Cursor cursor = db.rawQuery(query,null);
         if (cursor != null && cursor.getCount() > 0) {
@@ -460,6 +538,7 @@ public class DbHelper extends SQLiteOpenHelper {
         }
         cursor.close();
         db.close();
+        Log.e("ShuvoQuery",query);
        return answer;
     }
 
@@ -482,7 +561,8 @@ public class DbHelper extends SQLiteOpenHelper {
                         cursor.getInt(cursor.getColumnIndex(ANSWER_QUESTION_TYPE_ID)),
                         cursor.getInt(cursor.getColumnIndex(ANSWER_SEQUENCE_ID)),
                         cursor.getInt(cursor.getColumnIndex(ANSWER_SURVEY_ID)),
-                        cursor.getString(cursor.getColumnIndex(ANSWER))
+                        cursor.getString(cursor.getColumnIndex(ANSWER)),
+                        cursor.getInt(cursor.getColumnIndex(ANSWER_FLAG))
                 ));
                 cursor.moveToNext();
             }

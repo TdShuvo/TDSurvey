@@ -1,9 +1,11 @@
 package com.survey.shuvo.technodhaka.tdsurvey;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -60,7 +62,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     String visibleView;
 
     int mQusIndex;
-    int sequenceId;
+    public static volatile int sequenceId;
     int surveyID;
     HolderUser holderUser;
     HolderAnswer holderAnswer;
@@ -75,6 +77,8 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         setContentView(R.layout.activity_response_recording);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+
 
         dbHelper = new DbHelper(this);
 
@@ -102,37 +106,54 @@ public class ResponseRecordingActivity extends AppCompatActivity {
         btnNextQuestion.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //  answerResponse = loadResponseView(mQusIndex);
+
                String response = edtText.getText().toString().trim();
-                sequenceId = dbHelper.getSequenceId(holderQuestion.questionId,surveyID);
-                Log.e("ShuvoQuestionId", String.valueOf(holderQuestion.questionId));
-                if (sequenceId == 0){
-                    sequenceId = 1;
-                }else{
-                    sequenceId++;
+                String answer = dbHelper.isAnsweredOrNot(holderQuestion.questionId,surveyID,sequenceId);
+                if (answer != null /*|| !answer.isEmpty()*/){
+                    if (mQusIndex <= totalQuestionOfASurvey) {
+                        ++mQusIndex;
+
+                        if (mQusIndex == totalQuestionOfASurvey){
+
+                            showDialog();
+                        }
+                        loadQuestion(mQusIndex, surveyID);
+                        String lastAnswer = loadAnswer(holderQuestion.questionId,surveyID,sequenceId);
+                        loadResponseView(holderQuestion.questionTypeId,lastAnswer);
+
+                    }
+                    else if (mQusIndex > totalQuestionOfASurvey) {
+                        mQusIndex = totalQuestionOfASurvey;
+
+                    }
+
+                    return;
                 }
+
                 answerResponse = response;
                 if (answerResponse.isEmpty()) {
                     Log.e("MOR",answerResponse);
                     Toast.makeText(ResponseRecordingActivity.this, "Give Your response."+ answerResponse, Toast.LENGTH_SHORT).show();
                     return;
+                }else{
+                    Log.e("sequenceId", String.valueOf(sequenceId));
+                    insertAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, sequenceId, holderQuestion.surveyId);
                 }
 
-                ++mQusIndex;
                 if (mQusIndex <= totalQuestionOfASurvey) {
-                    insertAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, sequenceId, holderQuestion.surveyId);
+                    ++mQusIndex;
+
+                    if (mQusIndex == totalQuestionOfASurvey){
+
+                       showDialog();
+                    }
                     loadQuestion(mQusIndex, surveyID);
-
-
-                    Log.e("ShuvoQuestionIndex", String.valueOf(mQusIndex));
 
                 }
                 else if (mQusIndex > totalQuestionOfASurvey) {
                     mQusIndex = totalQuestionOfASurvey;
-                    sequenceId++;
+
                 }
-
-
             }
         });
 
@@ -140,7 +161,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 --mQusIndex;
-                if (mQusIndex >= 1){
+                if (mQusIndex >= 0){
                     loadQuestion(mQusIndex, surveyID);
                     String answer = loadAnswer(holderQuestion.questionId,surveyID,sequenceId);
                     loadResponseView(holderQuestion.questionTypeId,answer);
@@ -152,22 +173,55 @@ public class ResponseRecordingActivity extends AppCompatActivity {
     }
 
     private void showFirstQuestion() {
-        mQusIndex = 1;
+        mQusIndex = 0;
+        sequenceId = dbHelper.getSequenceId(surveyID);
+        ++sequenceId;
         loadQuestion(mQusIndex, surveyID);
+    }
+
+    private void showDialog(){
+
+        AlertDialog alertDialog = new AlertDialog.Builder(ResponseRecordingActivity.this).create();
+        alertDialog.setTitle("Completion Alert");
+        alertDialog.setMessage("Do you want to complete your survey?");
+        alertDialog.setButton(AlertDialog.BUTTON_POSITIVE,"Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                Toast.makeText(ResponseRecordingActivity.this, "Thanks for your time.", Toast.LENGTH_SHORT).show();
+                showFirstQuestion();
+            }
+        });
+        alertDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Toast.makeText(ResponseRecordingActivity.this, "OK, GO to the main page.", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(ResponseRecordingActivity.this,MainPageActivity.class));
+            }
+        });
+       /* alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });*/
+        alertDialog.show();
     }
 
     public void loadQuestion(int id, int surveyID) {
 
+      //  Log.e("ShuvoQuestionId", String.valueOf(holderQuestion.questionId));
+        List<HolderQuestion> questionList = dbHelper.getQuestionsForSurveyId(surveyID, id);
 
-        List<HolderQuestion> questionList = dbHelper.getQuestionsForSurveyId(surveyID, id - 1);
         if (questionList != null && questionList.size() > 0) {
                 holderQuestion = questionList.get(0);
-               visibleView =  loadResponseView(holderQuestion.questionTypeId,null);
-
+                visibleView =  loadResponseView(holderQuestion.questionTypeId,null);
               // insertAnswer(holderQuestion.questionId, holderQuestion.questionTypeId, 1, holderQuestion.surveyId);
                 txtQuestion.setText(questionList.get(0).question);
 
+
         }
+
 
     }
 
@@ -267,7 +321,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 response = edtText.getText().toString().trim();
                 answerResponse = response;
                 if (!response.isEmpty()) {
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtText.setText("");
                 break;
@@ -275,7 +329,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 response = edtText.getText().toString().trim();
                 answerResponse = response;
                 if (response != null) {
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtText.setText("");
                 break;
@@ -283,21 +337,21 @@ public class ResponseRecordingActivity extends AppCompatActivity {
                 response = edtText.getText().toString().trim();
                 answerResponse = response;
                 if (!response.isEmpty()) {
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtText.setText("");
                 break;
             case 4:// showOneView(edtNumber);
                 response = edtNumber.getText().toString().trim();
                 if (response != null) {
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtNumber.setText("");
                 break;
             case 5: //showOneView(edtDecimal);
                 response = edtDecimal.getText().toString().trim();
                 if (response != null) {
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 } else Toast.makeText(this, "Please Give Your response", Toast.LENGTH_SHORT).show();
                 edtDecimal.setText("");
                 break;
@@ -316,7 +370,7 @@ public class ResponseRecordingActivity extends AppCompatActivity {
             default: //showOneView(edtText);
                 response = edtText.getText().toString().trim();
                 if (response != null)
-                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response));
+                    dbHelper.insertAnswer(new HolderAnswer(holderUser.userId, questionID, holderUser.countryId, qt_id, sequenceId, surveyId, response,0));
                 edtText.setText("");
         }
 

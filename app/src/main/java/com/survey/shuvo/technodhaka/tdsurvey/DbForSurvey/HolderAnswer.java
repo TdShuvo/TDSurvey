@@ -15,6 +15,7 @@ public class HolderAnswer implements Serializable {
     public int secquenceId;
     public int surveyId;
     public String answer;
+    public int answer_flag;
 
     public HolderAnswer(int answerId) {
         this.answerId = answerId;
@@ -23,7 +24,7 @@ public class HolderAnswer implements Serializable {
     public HolderAnswer() {
     }
 
-    public HolderAnswer( int userId, int questionId, int countryId, int questionTypeId, int secquenceId, int surveyId, String answer) {
+  /*  public HolderAnswer( int userId, int questionId, int countryId, int questionTypeId, int secquenceId, int surveyId, String answer) {
 
         this.userId = userId;
         this.questionId = questionId;
@@ -32,5 +33,18 @@ public class HolderAnswer implements Serializable {
         this.secquenceId = secquenceId;
         this.surveyId = surveyId;
         this.answer = answer;
+    }*/
+
+    public HolderAnswer(int userId, int questionId, int countryId, int questionTypeId, int secquenceId, int surveyId,
+                        String answer, int answer_flag) {
+        this.answerId = answerId;
+        this.userId = userId;
+        this.questionId = questionId;
+        this.countryId = countryId;
+        this.questionTypeId = questionTypeId;
+        this.secquenceId = secquenceId;
+        this.surveyId = surveyId;
+        this.answer = answer;
+        this.answer_flag = answer_flag;
     }
 }

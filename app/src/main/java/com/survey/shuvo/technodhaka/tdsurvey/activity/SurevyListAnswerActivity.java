@@ -163,19 +163,29 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
     public class SendPostRequest extends AsyncTask<String, Void, String> {
 
         HolderAnswer holderAnswer;
+        int answerID;
 
         public SendPostRequest(HolderAnswer holderAnswer) {
             this.holderAnswer = holderAnswer;
         }
 
-        protected void onPreExecute(){}
+        protected void onPreExecute(){
+            answerID = dbHelper.getAnswerId(holderAnswer.userId,holderAnswer.surveyId,
+                    holderAnswer.questionId,holderAnswer.secquenceId,holderAnswer.answer_flag);
+            Log.e("ShuvoAnswerID", String.valueOf(answerID));
+            if (answerID == 0){
+                Toast.makeText(context, "You already synced all data.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
 
         protected String doInBackground(String... arg0) {
 
-
-
+            if (answerID == 0){
+                return "";
+            }
             try {
-                String request = "http://10.0.2.2:8080/api/values/putAnswer/";
+                String request = "http://tshuvo-001-site1.htempurl.com/api/values/putAnswer/";
                 URL url = new URL(request); // here is your URL path
 
                 JSONObject answer = new JSONObject();
@@ -186,12 +196,13 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
                 answer.put("question_id", String.valueOf(holderAnswer.questionId));
                 answer.put("qt_id", String.valueOf(holderAnswer.questionTypeId));
                 answer.put("scequence_id", String.valueOf(holderAnswer.secquenceId));
+                answer.put("survey_id", String.valueOf(holderAnswer.surveyId));
                 //Log.e("params",postDataParams.toString());
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(15000   );
-                conn.setConnectTimeout(15000  );
-                conn.setDoInput(false);
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
+               // conn.setDoInput(false);
                 // conn.setDoOutput(true);
                 conn.setRequestMethod("POST");
                 //  conn.setRequestMethod("putAnswer");
@@ -201,6 +212,9 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
                 conn.setUseCaches (false);
 
 
+             /*   int resposneCode = conn.getResponseCode();
+
+                Log.e("ShuvoResponse :", String.valueOf(resposneCode));*/
 
                 OutputStream os = conn.getOutputStream();
                 BufferedWriter writer = new BufferedWriter(
@@ -230,6 +244,7 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
                     }
 
                     in.close();
+
                     return sb.toString();
 
                 }
@@ -243,86 +258,17 @@ public class SurevyListAnswerActivity extends AppCompatActivity {
 
         }
 
-    /*    protected HolderAnswer doInBackground(HolderAnswer... holderAnswer) {
 
-            HolderAnswer holAnswer = holderAnswer[0];
-
-            try {
-                String request = "http://10.0.2.2:8080/api/values/putAnswer/";
-                URL url = new URL(request); // here is your URL path
-
-                JSONObject answer = new JSONObject();
-
-                answer.put("answer",holAnswer.answer);// Set the parameter and the
-                answer.put("user_id", String.valueOf(holAnswer.userId));
-                answer.put("country_id", String.valueOf(holAnswer.countryId));
-                answer.put("question_id", String.valueOf(holAnswer.questionId));
-                answer.put("qt_id", String.valueOf(holAnswer.questionTypeId));
-                answer.put("scequence_id", String.valueOf(holAnswer.secquenceId));
-                //Log.e("params",postDataParams.toString());
-
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(15000   );
-                conn.setConnectTimeout(15000  );
-                conn.setDoInput(false);
-                // conn.setDoOutput(true);
-                conn.setRequestMethod("POST");
-                //  conn.setRequestMethod("putAnswer");
-                // conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-                conn.setRequestProperty("Content-Type", "application/json");
-                // conn.setRequestProperty("charset", "utf-8");
-                conn.setUseCaches (false);
-
-
-
-                OutputStream os = conn.getOutputStream();
-                BufferedWriter writer = new BufferedWriter(
-                        new OutputStreamWriter(os, "UTF-8"));
-                writer.write(String.valueOf(answer));
-                // writer.write(getPostDataString(answer));
-
-                writer.flush();
-                writer.close();
-                os.close();
-
-                int responseCode=conn.getResponseCode();
-
-                if (responseCode == HttpsURLConnection.HTTP_OK) {
-
-                    BufferedReader in=new BufferedReader(new
-                            InputStreamReader(
-                            conn.getInputStream()));
-
-                    StringBuffer sb = new StringBuffer("");
-                    String line="";
-
-                    while((line = in.readLine()) != null) {
-
-                        sb.append(line);
-                        break;
-                    }
-
-                    in.close();
-                   // return holAnswer.toString();
-                    return holAnswer;
-
-                }
-                else {
-                   // return new String("false : "+responseCode);
-                    return holAnswer;
-                }
-            }
-            catch(Exception e){
-                //return new String("Exception: " + e.getMessage());
-                return holAnswer;
-            }
-
-        }*/
 
         @Override
         protected void onPostExecute(String result) {
-            Toast.makeText(getApplicationContext(), "Shuvo"+result,
-                    Toast.LENGTH_LONG).show();
+
+            if (answerID != 0){
+                dbHelper.updateAnswerFlag(answerID);
+            }else{
+                Toast.makeText(getApplicationContext(), "Data synced",
+                        Toast.LENGTH_LONG).show();
+            }
 
             Log.e("ShuvoError",result);
         }
